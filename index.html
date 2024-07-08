@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>“Normalized Stress” is Not Normalized</title>
+    <link rel="icon" type="image/png" href="./images/favicon.png">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+    <div id="title">
+        <h1>“Normalized Stress” is Not Normalized: How to Interpret Stress Correctly</h1>
+        <p style="text-align: left; font-size: 20px; width: 85%;">Despite its widespread use as a quality metric for dimensionality reduction techniques, normalized stress is sensitive
+        to uniform scaling (stretching, shrinking) of the embedding. By exploring how normalized stress behaves on a variety of
+        simple datasets, we can construct a safe and reliable variant, scale-normalized stress. </p>
+        <hr class="line">
+    </div>
+
+    <div id="content">
+        <svg id="plot"></svg>
+
+        <div id="controls">
+            <div class="select-wrapper">
+                <select id="datasetSelect" style="font-family: Arial, sans-serif;"></select>
+            </div>
+
+            <div id="checkboxes">
+                <label style="font-size: 20px;"><input type="checkbox" id="MDS" class="styled-checkbox" checked>
+                    MDS</label><br>
+                <label style="font-size: 20px;"><input type="checkbox" id="t-SNE" class="styled-checkbox" checked>
+                    t-SNE</label><br>
+                <label style="font-size: 20px;"><input type="checkbox" id="Random" class="styled-checkbox" checked>
+                    Random</label><br>
+            </div>
+
+            <div id="sliders">
+                <label for="MDSSlider" style="font-size: 20px;">MDS scalar <span id="MDSSliderValue">12</span></label>
+                <input type="range" min="1" max="12" value="12" id="MDSSlider" class="slider" /><br>
+                <label for="t-SNESlider" style="font-size: 20px;">t-SNE scalar <span id="t-SNESliderValue">12</span></label>
+                <input type="range" min="1" max="12" value="12" id="t-SNESlider" class="slider" /><br>
+                <label for="RandomSlider" style="font-size: 20px;">Random scalar <span id="RandomSliderValue">12</span></label>
+                <input type="range" min="1" max="12" value="12" id="RandomSlider" class="slider" /><br>
+            </div>
+
+
+            <p id="orderText" style="font-size: 20px;"></p>
+        </div>
+    </div>
+
+    <div id="tooltipContainer"></div>
+
+    <p style="font-size: 20px;">Max scalar <span id="sliderValue">12</span></p>
+    <input type="range" min="1" max="2000" value="12" id="rangeSlider" class="slider" />
+
+    <div id="images"></div>
+        
+    <dt-appendix>
+        <div class="l-body">
+            <h3>Description & Acknowledgement</h3>
+            <p>This is a web application that contains an interactive figure. The interactive figure plots the "normalized" stress
+            curves of MDS, t-SNE, and Random (points are randomly placed) embeddings over a range of scalars for various well-known
+            datasets. The minimum value for each curve has been labeled with a point, the normalised stress score (y-coordinate) of 
+            which the authors denote as the scale-normalized stress score. By hovering over the point, the user can examine its exact 
+            x and y coordinates. The user also has the ability to select the dataset they would like to explore, toggle the dimensionality 
+            reduction (DR) techniques, observe how changing the scalar value for a given DR technique affects the ranking, and change 
+            the max value for the x-axis range (from 1 to 2000).</p>
+
+            <p>The code and instructions needed to reproduce the experiments upon which this graphical interface is based, including 
+                the implementation of scale-normalized stress, are made <a href="https://github.com/KiranSmelser/stress-metrics-and-scale">available on GitHub</a>.</p>
+    
+            <p>Published on July 7, 2024, and created by Kiran Smelser to demonstrate the issues with using normalized stress as a
+            quality metric. Thanks to Professor Kobourov for pointing out that normalized stress is scale sensitive.</p>
+    
+            <h3>References</h3>
+            <dt-bibliography>
+                <ol>
+                    <li><b>“Normalized Stress” is Not Normalized: How to Interpret Stress Correctly</b></li>
+                    <li><b>Size Should not Matter: Scale-invariant Stress Metrics</b></li>
+                </ol>
+            </dt-bibliography>
+
+            <h3>Updates and Corrections</h3>
+            <p>If you see a mistake or want to suggest a change, please <a class="github-issue"
+                    href="https://github.com/KiranSmelser/stress-metrics-and-scale/issues">create an issue on GitHub</a>.</p>
+
+            <h3 id="citation">Citation and Reuse</h3>
+            <p>If you reuse any of our figures, diagrams, or text in another source, we would appreciate citations.</p>
+    
+            <p>For attribution in academic contexts, please cite this work as</p>
+            <pre
+                class="citation short">[TO-DO]</pre>
+    
+            <p>BibTeX citation</p>
+            <pre class="citation long">@article{
+                [TO-DO]
+    }</pre>
+        </div>
+    </dt-appendix>
+
+
+    <script src="plot.js"></script>
+</body>
+
+</html>
