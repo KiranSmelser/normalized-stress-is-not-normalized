@@ -82,8 +82,8 @@ d3.json("./stress_curves.json").then(function (data) {
 
     // Update the displayed value for the MDS slider
     document.getElementById('MDSSlider').addEventListener('input', function () {
-        if (document.getElementById('MDS').checked) {  
-            document.getElementById('MDSSliderValue').textContent = this.value;
+        if (document.getElementById('MDS').checked) {
+            document.getElementById('MDSSliderValue').textContent = parseFloat(this.value).toFixed(1);
             updateOrderText();
         }
     });
@@ -91,7 +91,7 @@ d3.json("./stress_curves.json").then(function (data) {
     // Update the displayed value for the t-SNE slider 
     document.getElementById('t-SNESlider').addEventListener('input', function () {
         if (document.getElementById('t-SNE').checked) {
-            document.getElementById('t-SNESliderValue').textContent = this.value;
+            document.getElementById('t-SNESliderValue').textContent = parseFloat(this.value).toFixed(1);
             updateOrderText();
         }
     });
@@ -99,10 +99,11 @@ d3.json("./stress_curves.json").then(function (data) {
     // Update the displayed value for the Random slider
     document.getElementById('RandomSlider').addEventListener('input', function () {
         if (document.getElementById('Random').checked) {
-            document.getElementById('RandomSliderValue').textContent = this.value;
+            document.getElementById('RandomSliderValue').textContent = parseFloat(this.value).toFixed(1);
             updateOrderText();
         }
     });
+
 
     // Function to update the visibility of the sliders
     function updateSliders() {
