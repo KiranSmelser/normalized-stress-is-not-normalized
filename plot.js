@@ -78,6 +78,14 @@ d3.json("./stress_curves.json").then(function (data) {
         document.getElementById('MDSSlider').max = maxVal;
         document.getElementById('t-SNESlider').max = maxVal;
         document.getElementById('RandomSlider').max = maxVal;
+
+        document.getElementById('MDSSlider').value = maxVal;
+        document.getElementById('t-SNESlider').value = maxVal;
+        document.getElementById('RandomSlider').value = maxVal;
+
+        document.getElementById('MDSSliderValue').textContent = parseFloat(maxVal).toFixed(1);
+        document.getElementById('t-SNESliderValue').textContent = parseFloat(maxVal).toFixed(1);
+        document.getElementById('RandomSliderValue').textContent = parseFloat(maxVal).toFixed(1);
     });
 
     // Update the displayed value for the MDS slider
