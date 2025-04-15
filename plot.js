@@ -1,326 +1,203 @@
-d3.json("./stress_curves.json").then(function (data) {
-    var select = d3.select("#datasetSelect");
-    var svg = d3.select("#plot");
+// Container class that manages plots, controls, and images
+class DRContainer {
+    constructor(data, config) {
+        this.plot1 = new DRPlot(data, config.plot1);
+        this.plot2 = new DRPlot(data, config.plot2);
+        this.controls = new DRControls(data, config.controls, this.plot1, this.plot2);
+        this.images = new DRImages(data, config.images);
+    }
+}
 
-    var margin = { top: 20, right: 20, bottom: 30, left: 50 };
-    var width = 960 - margin.left - margin.right;
-    var height = 500 - margin.top - margin.bottom;
+// DRPlot class (simplified to focus on plotting logic)
+class DRPlot {
+    constructor(data, config) {
+        this.data = data;
+        this.metric = config.metric;
+        this.techniques = ["MDS", "TSNE", "RANDOM"];
 
-    var x = d3.scaleLinear().range([0, width]);
-    var y = d3.scaleLog().range([height, 0]);
+        this.svg = d3.select(config.plot);
+        this.tooltipContainer = d3.select(config.tooltipContainer);
 
-    var line = d3.line()
-        .x(function (d) { return x(d.range); })
-        .y(function (d) { return y(d.value); });
+        this.margin = { top: 20, right: 20, bottom: 30, left: 40 };
+        this.width = this.svg.node().getBoundingClientRect().width - this.margin.left - this.margin.right;
+        this.height = this.svg.node().getBoundingClientRect().height - this.margin.top - this.margin.bottom;
 
-    var g = svg.append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+        this.x = d3.scaleLinear().range([0, this.width]);
+        this.y = d3.scaleLog().range([this.height, 0]);
 
-    // Create the X axis
-    var xAxis = d3.axisBottom(x);
-    g.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis)
-        .style("font-family", "Arial, sans-serif")
-        .append("text")
-        .attr("fill", "#000")
-        .attr("x", width / 2)
-        .attr("y", margin.bottom) 
-        .attr("dy", "-0.1em") 
-        .attr("text-anchor", "middle") 
-        .style("font-size", "15px") 
-        .style("font-family", "Arial, sans-serif")
-        .text("Scale value"); 
+        this.line = d3.line()
+            .x(d => this.x(d.range))
+            .y(d => this.y(d.value));
 
-    // Create the Y axis
-    var yAxis = d3.axisLeft(y)
-    g.append("g")
-        .attr("class", "y axis")
-        .call(yAxis)
-        .style("font-family", "Arial, sans-serif")
-        .append("text") 
-        .attr("fill", "#000") 
-        .attr("transform", "rotate(-90)") 
-        .attr("x", -height / 2) 
-        .attr("y", -margin.left) 
-        .attr("dy", "0.75em") 
-        .attr("text-anchor", "middle") 
-        .style("font-size", "15px") 
-        .style("font-family", "Arial, sans-serif")
-        .text("log(Normalized stress)"); 
+        this.g = this.svg.append("g")
+            .attr("transform", `translate(${this.margin.left},${this.margin.top})`);
 
-    select.selectAll("option")
-        .data(Object.keys(data))
-        .enter().append("option")
-        .text(function (d) { return d.charAt(0).toUpperCase() + d.slice(1); })
-        .attr("value", function (d) { return d; });
+        this.xAxis = d3.axisBottom(this.x);
+        this.yAxis = d3.axisLeft(this.y);
 
-    select.on("change", function () {
-        updatePlot();
-        updateImages();
-        updateOrderText();
-    });
+        this.svg.append("text")
+            .attr("x", (this.margin.left + this.width / 2))
+            .attr("y", 20)
+            .attr('text-anchor', 'middle')
+            .style('font-size', "20px")
+            .text(this.metric === 'stress' ? "Stress" : "KL-Divergence");
 
-    // Add event listeners for the checkboxes
-    d3.selectAll("input[type=checkbox]").on("change", function () {
-        updateImages();
-        updatePlot();
-        updateSliders();
-        updateOrderText();
-    });
+        this.createAxes();
+    }
 
-    var slider = d3.select("#rangeSlider");
-    var sliderValue = d3.select("#sliderValue");
+    createAxes() {
+        this.g.append("g")
+            .attr("class", "x axis")
+            .attr("transform", `translate(0,${this.height})`)
+            .call(this.xAxis);
 
-    document.getElementById('rangeSlider').addEventListener('input', function () {
-        var maxVal = this.value;
-        document.getElementById('MDSSlider').max = maxVal;
-        document.getElementById('t-SNESlider').max = maxVal;
-        document.getElementById('RandomSlider').max = maxVal;
+        this.g.append("g")
+            .attr("class", "y axis")
+            .call(this.yAxis);
+    }
 
-        document.getElementById('MDSSlider').value = maxVal;
-        document.getElementById('t-SNESlider').value = maxVal;
-        document.getElementById('RandomSlider').value = maxVal;
+    update(datasetName) {
+        const dataset = this.data[datasetName][this.metric];
 
-        document.getElementById('MDSSliderValue').textContent = parseFloat(maxVal).toFixed(1);
-        document.getElementById('t-SNESliderValue').textContent = parseFloat(maxVal).toFixed(1);
-        document.getElementById('RandomSliderValue').textContent = parseFloat(maxVal).toFixed(1);
-    });
+        let [start, stop, num] = dataset.scales;
+        dataset.range = d3.range(start, stop, (stop - start) / num);
 
-    // Update the displayed value for the MDS slider
-    document.getElementById('MDSSlider').addEventListener('input', function () {
-        if (document.getElementById('MDS').checked) {
-            document.getElementById('MDSSliderValue').textContent = parseFloat(this.value).toFixed(1);
-            updateOrderText();
-        }
-    });
+        this.x.domain([start, stop]);
+        this.y.domain([
+            d3.min(this.techniques, k => d3.min(dataset[k])),
+            d3.max(this.techniques, k => d3.max(dataset[k]))
+        ]);
 
-    // Update the displayed value for the t-SNE slider 
-    document.getElementById('t-SNESlider').addEventListener('input', function () {
-        if (document.getElementById('t-SNE').checked) {
-            document.getElementById('t-SNESliderValue').textContent = parseFloat(this.value).toFixed(1);
-            updateOrderText();
-        }
-    });
+        this.g.select(".x.axis").transition().duration(750).call(this.xAxis);
+        this.g.select(".y.axis").transition().duration(750).call(this.yAxis);
+        this.g.selectAll(".line, circle, .legend").remove();
 
-    // Update the displayed value for the Random slider
-    document.getElementById('RandomSlider').addEventListener('input', function () {
-        if (document.getElementById('Random').checked) {
-            document.getElementById('RandomSliderValue').textContent = parseFloat(this.value).toFixed(1);
-            updateOrderText();
-        }
-    });
-
-
-    // Function to update the visibility of the sliders
-    function updateSliders() {
-        ["MDS", "t-SNE", "Random"].forEach(function (technique) {
-            var isChecked = document.getElementById(technique).checked;
-            document.getElementById(technique + 'Slider').style.display = isChecked ? 'inline-block' : 'none';  // Change 'block' to 'inline-block'
-            document.getElementById(technique + 'SliderValue').style.display = isChecked ? 'inline-block' : 'none';  // Change 'block' to 'inline-block'
-            document.querySelector('label[for=' + technique + 'Slider]').style.display = isChecked ? 'inline-block' : 'none';  // Change 'block' to 'inline-block'
+        this.techniques.forEach((key, index) => {
+            if (document.getElementById(key).checked) {
+                this.drawLine(dataset, key);
+                this.drawMin(dataset, key, index);
+            }
         });
     }
 
-    // Function to update the text for the order of DR techniques
-    function updateOrderText() {
-        var dataset = data[select.node().value];
-        var techniques = ["MDS", "t-SNE", "Random"].filter(function (technique) {
-            return document.getElementById(technique).checked; 
-        });
-        var sliderValues = techniques.map(function (technique) {
-            return document.getElementById(technique + 'Slider').value;
-        });
-
-        if (techniques.length >= 2) {
-            var ranks = techniques.map(function (technique, i) {
-                var values = dataset[technique];
-                var range = dataset["range"];
-                var sliderValue = sliderValues[i];
-
-                var index = d3.bisectLeft(range, sliderValue);
-
-                if (index == range.length) index--;
-                if (index > 0 && (sliderValue - range[index - 1]) < (range[index] - sliderValue)) index--;
-
-                return { technique: technique, value: values[index] };
-            });
-
-            ranks.sort(function (a, b) { return d3.ascending(a.value, b.value); });
-
-            var orderText = d3.select("#orderText");
-            orderText.text(ranks.map(function (d) { return d.technique; }).join(" < "));
-        } else {
-            document.getElementById('orderText').style.display = 'none';
-        }
+    drawLine(dataset, key) {
+        this.g.append("path")
+            .datum(dataset[key].map((v, i) => ({ range: dataset.range[i], value: v })))
+            .attr("fill", "none")
+            .attr("stroke", this.colorForKey(key))
+            .attr("stroke-width", 1.5)
+            .attr("class", "line")
+            .attr("d", this.line);
     }
 
-    var imageDiv = d3.select("#images").append("div").attr("id", "imageDiv");
+    drawMin(dataset, key, legendIndex) {
+        let argmin = d3.scan(dataset[key], (a, b) => d3.ascending(a, b));
+        const minX = dataset.range[argmin];
+        const minY = dataset[key][argmin];
 
-    // Function to update the images
-    function updateImages() {
-        imageDiv.selectAll("div").remove();
+        const circle = this.g.append("circle")
+            .attr("cx", this.x(minX))
+            .attr("cy", this.y(minY))
+            .attr("r", 5)
+            .style("fill", this.colorForKey(key));
 
-        var dataset = select.property("value");
-        var techniques = ["MDS", "t-SNE", "Random"].filter(function (technique) {
-            return d3.select("#" + technique).property("checked");
+        const tooltip = this.tooltipContainer.append("div").attr("class", "tooltip").style("opacity", 0);
+
+        circle.on("mouseover", () => {
+            tooltip.transition().duration(200).style("opacity", 0.9);
+            tooltip.html(`x: ${minX}<br/>y: ${minY}`).style("left", "10px").style("top", "10px");
+        }).on("mouseout", () => {
+            tooltip.transition().duration(500).style("opacity", 0);
+            tooltip.html("");
         });
+    }
 
-        var width = 100 / techniques.length + "%";
+    colorForKey(key) {
+        return key === "MDS" ? "#A40000FF" : key === "TSNE" ? "#16317DFF" : "#007E2FFF";
+    }
+}
 
-        techniques.forEach(function (technique) {
-            var div = imageDiv.append("div")
+// Sidebar controller
+class DRControls {
+    constructor(data, config, plot1, plot2) {
+        this.data = data;
+        this.select = d3.select(config.select);
+        this.plot1 = plot1;
+        this.plot2 = plot2;
+
+        d3.select(config.select).on('change', () => this.update());
+        this.populateSelect();
+        // this.attachEvents();
+    }
+
+    populateSelect() {
+        this.select.selectAll("option")
+            .data(Object.keys(this.data))
+            .enter().append("option")
+            .text(d => d.charAt(0).toUpperCase() + d.slice(1))
+            .attr("value", d => d);
+
+        this.select.property("value", "iris");
+        this.select.dispatch("change");
+    }
+
+    attachEvents() {
+        this.select.on("change", () => this.update());
+        d3.selectAll("input[type=checkbox]").on("change", () => this.update());
+    }
+
+    update() {
+        const dataset = this.select.property("value");
+        this.plot1.update(dataset);
+        this.plot2.update(dataset);
+    }
+}
+
+// Image panel
+class DRImages {
+    constructor(data, config) {
+        this.data = data;
+        this.techniques = ["MDS", "TSNE", "RANDOM"];
+        this.imageDiv = d3.select(config.images).append("div").attr("id", "imageDiv");
+
+        d3.select(config.select).on("change", () => this.update());
+        d3.selectAll("input[type=checkbox]").on("change", () => this.update());
+
+        this.update();
+    }
+
+    update() {
+        this.imageDiv.selectAll("div").remove();
+
+        const dataset = d3.select("#datasetSelect").property("value");
+        const checked = this.techniques.filter(t => d3.select(`#${t}`).property("checked"));
+        const width = 100 / checked.length + "%";
+
+        checked.forEach(t => {
+            const div = this.imageDiv.append("div")
                 .style("display", "inline-block")
                 .style("width", width)
                 .style("text-align", "center");
 
             div.append("p")
-                .text(technique)
+                .text(t)
                 .style("font-size", "20px")
                 .style("margin-bottom", "0px");
 
             div.append("img")
-                .attr("src", "./images/" + dataset + "_" + technique + ".png")
-                .attr("alt", technique + " embedding for " + dataset)
+                .attr("src", `./pdfs/${dataset}_${t}.svg`)
+                .attr("alt", `${t} embedding for ${dataset}`)
                 .style("max-width", "100%")
                 .style("margin-top", "0px");
         });
     }
+}
 
-    // Debounce function
-    function debounce(func, wait) {
-        var timeout;
-        return function () {
-            var context = this, args = arguments;
-            var later = function () {
-                timeout = null;
-                func.apply(context, args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    };
-
-    slider.on("input", debounce(function () {
-        x.domain([0, +this.value]);
-        sliderValue.text(this.value);
-        updatePlot();
-    }, 200)); // 200ms debounce time
-
-    function updatePlot() {
-        var dataset = data[select.node().value];
-
-        var maxY = d3.max(["MDS", "t-SNE", "Random"], function (key) { return d3.max(dataset[key]); });
-        var minY = d3.min(["MDS", "t-SNE", "Random"], function (key) { return d3.min(dataset[key]); });
-        y.domain([minY, maxY]);
-
-        g.select(".x.axis")
-            .transition()
-            .duration(750)
-            .call(xAxis);
-
-        g.select(".y.axis")
-            .transition()
-            .duration(750)
-            .call(yAxis);
-
-        g.selectAll(".line").remove();
-        g.selectAll("circle").remove();
-        g.selectAll(".legend").remove();
-
-        var legendIndex = 0;
-        var minPoints = [];
-        ["MDS", "t-SNE", "Random"].forEach(function (key, i) {
-            if (document.getElementById(key).checked) {
-                g.append("path")
-                    .datum(dataset[key].map(function (value, i) { return { range: dataset.range[i], value: value }; }))
-                    .attr("fill", "none")
-                    .attr("stroke", key === "MDS" ? "#A40000FF" : key === "t-SNE" ? "#16317DFF" : "#007E2FFF")
-                    .attr("stroke-linejoin", "round")
-                    .attr("stroke-linecap", "round")
-                    .attr("stroke-width", 1.5)
-                    .attr("d", line)
-                    .attr("class", "line");
-
-                // Minimum points
-                var minPoint = dataset[key + "_min"];
-                var circle = g.append("circle")
-                    .attr("cx", x(minPoint[0]))
-                    .attr("cy", y(minPoint[1]))
-                    .attr("r", 5)
-                    .style("fill", key === "MDS" ? "#A40000FF" : key === "t-SNE" ? "#16317DFF" : "#007E2FFF");
-
-                // Tooltip
-                var tooltip = d3.select("#tooltipContainer").append("div")
-                    .attr("class", "tooltip")
-                    .style("opacity", 0);
-
-                circle.on("mouseover", function (d) {
-                    tooltip.transition()
-                        .duration(200)
-                        .style("opacity", .9);
-                    tooltip.html("x: " + minPoint[0] + "<br/>" + "y: " + minPoint[1])
-                        .style("left", "10px") 
-                        .style("top", "10px"); 
-                })
-                    .on("mouseout", function (d) {
-                        tooltip.transition()
-                            .duration(500)
-                            .style("opacity", 0);
-                    });
-
-                circle.on("mouseout", function (d) {
-                    tooltip.transition()
-                        .duration(500)
-                        .style("opacity", 0);
-                    tooltip.html(""); 
-                });
-
-                // Legend for lines
-                var legend = g.append("g")
-                    .attr("transform", "translate(" + (width - 20) + "," + (20 + legendIndex * 40) + ")")
-                    .attr("class", "legend");
-
-                legend.append("rect")
-                    .attr("width", 18)
-                    .attr("height", 18)
-                    .style("fill", key === "MDS" ? "#A40000FF" : key === "t-SNE" ? "#16317DFF" : "#007E2FFF");
-
-                legend.append("text")
-                    .attr("x", -6)
-                    .attr("y", 9)
-                    .attr("dy", ".35em")
-                    .style("text-anchor", "end")
-                    .text(key);
-
-                // Legend for min points
-                var minLegend = g.append("g")
-                    .attr("transform", "translate(" + (width - 20) + "," + (40 + legendIndex * 40) + ")")
-                    .attr("class", "legend");
-
-                minLegend.append("circle")
-                    .attr("cx", 9)
-                    .attr("cy", 9)
-                    .attr("r", 5)
-                    .style("fill", key === "MDS" ? "#A40000FF" : key === "t-SNE" ? "#16317DFF" : "#007E2FFF");
-
-                minLegend.append("text")
-                    .attr("x", -6)
-                    .attr("y", 9)
-                    .attr("dy", ".35em")
-                    .style("text-anchor", "end")
-                    .text("Minimum");
-
-                legendIndex++;
-            }
-        });
-
-    }
-
-    select.property("value", "iris");
-    x.domain([0, 12]);
-    select.dispatch("change");
-    updateImages();
-    updateSliders();
+d3.json("./output.json").then(data => {
+    new DRContainer(data, {
+        plot1: { plot: "#plot", tooltipContainer: "#tooltipContainer", metric: "stress" },
+        plot2: { plot: "#plot2", tooltipContainer: "#tooltipContainer", metric: "KL" },
+        controls: { select: "#datasetSelect" },
+        images: { images: "#images", select: "#datasetSelect" }
+    });
 });

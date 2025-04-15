@@ -27,18 +27,19 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 80%;
+    width: 100%;
+    gap: 1%;
     margin: auto;
 }
 
-#plot {
+/* #plot {
     width: 70%;
     height: 600px;
     margin-right: 0px;
-}
+} */
 
 #controls {
-    width: 30%;
+    width: 20%;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
@@ -46,6 +47,13 @@ body {
     height: 400px;
     margin-top: -75px;
     padding-left: 30px;
+}
+
+.plot {
+    width: 40%; 
+    height: auto;
+    height: 600px;
+    margin-right: 0px;
 }
 
 #sliders {
