@@ -27,16 +27,14 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 1600px;
     width: 100%;
     gap: 1%;
-    margin: auto;
 }
 
-/* #plot {
-    width: 70%;
-    height: 600px;
-    margin-right: 0px;
-} */
+#plot {
+    margin-left: 125px;
+}
 
 #controls {
     width: 20%;

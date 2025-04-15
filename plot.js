@@ -1,4 +1,3 @@
-// Container class that manages plots, controls, and images
 class DRContainer {
     constructor(data, config) {
         this.plot1 = new DRPlot(data, config.plot1);
@@ -40,7 +39,8 @@ class DRPlot {
             .attr("y", 20)
             .attr('text-anchor', 'middle')
             .style('font-size', "20px")
-            .text(this.metric === 'stress' ? "Stress" : "KL-Divergence");
+            .style('font-family', "Arial, sans-serif")
+            .text(this.metric === 'stress' ? "Stress" : "KL Divergence");
 
         this.createAxes();
     }
@@ -125,9 +125,9 @@ class DRControls {
         this.plot1 = plot1;
         this.plot2 = plot2;
 
-        d3.select(config.select).on('change', () => this.update());
+        d3.select(config.select).on('change.controls', () => this.update());
         this.populateSelect();
-        // this.attachEvents();
+        this.attachEvents();
     }
 
     populateSelect() {
@@ -142,8 +142,7 @@ class DRControls {
     }
 
     attachEvents() {
-        this.select.on("change", () => this.update());
-        d3.selectAll("input[type=checkbox]").on("change", () => this.update());
+        d3.selectAll("input[type=checkbox]").on("change.controls", () => this.update());
     }
 
     update() {
@@ -160,8 +159,8 @@ class DRImages {
         this.techniques = ["MDS", "TSNE", "RANDOM"];
         this.imageDiv = d3.select(config.images).append("div").attr("id", "imageDiv");
 
-        d3.select(config.select).on("change", () => this.update());
-        d3.selectAll("input[type=checkbox]").on("change", () => this.update());
+        d3.select(config.select).on("change.images", () => this.update());
+        d3.selectAll("input[type=checkbox]").on("change.images", () => this.update());
 
         this.update();
     }
@@ -172,6 +171,7 @@ class DRImages {
         const dataset = d3.select("#datasetSelect").property("value");
         const checked = this.techniques.filter(t => d3.select(`#${t}`).property("checked"));
         const width = 100 / checked.length + "%";
+        const techniqueLabels = { "MDS": "MDS", "TSNE": "t-SNE", "RANDOM": "Random" };
 
         checked.forEach(t => {
             const div = this.imageDiv.append("div")
@@ -180,8 +180,9 @@ class DRImages {
                 .style("text-align", "center");
 
             div.append("p")
-                .text(t)
+                .text(techniqueLabels[t])
                 .style("font-size", "20px")
+                .style("font-family", "Arial, sans-serif")
                 .style("margin-bottom", "0px");
 
             div.append("img")
