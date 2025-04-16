@@ -23,7 +23,9 @@ class DRPlot {
         this.height = this.svg.node().getBoundingClientRect().height - this.margin.top - this.margin.bottom;
 
         this.x = d3.scaleLinear().range([0, this.width]);
-        this.y = d3.scaleLog().range([this.height, 0]);
+
+        const sscale = this.metric === "stress" ? d3.scaleLog() : d3.scaleLinear();
+        this.y = sscale.range([this.height, 0]);
 
         this.line = d3.line()
             .x(d => this.x(d.range))
