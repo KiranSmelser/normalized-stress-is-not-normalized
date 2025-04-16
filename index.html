@@ -11,10 +11,10 @@
 <body>
     <div id="title">
         <h1>The Effect of Scale on Quality Metrics for Dimensionality Reduction</h1>
-        <p style="text-align: left; font-size: 20px; width: 85%;">Despite its widespread use as a quality metric for dimensionality reduction techniques, 
+        <p style="text-align: left; font-size: 20px; width: 90%;">Despite its widespread use as a quality metric for dimensionality reduction techniques, 
             normalized stress is sensitive
         to uniform scaling (stretching, shrinking) of the embedding. 
-        While not as often used, KL-divergence suffers fromt the same drawback.
+        While not as often used, KL divergence suffers from the same drawback.
         By exploring how normalized stress behaves on a variety of
         simple datasets, we can construct a safe and reliable variant, scale-normalized stress.</p>
         <hr class="line">
@@ -30,11 +30,11 @@
             </div>
 
             <div id="checkboxes">
-                <label style="font-size: 20px;"><input type="checkbox" id="MDS" class="styled-checkbox" checked>
+                <label style="font-size: 20px; font-family: Arial, sans-serif;"><input type="checkbox" id="MDS" class="styled-checkbox" checked>
                     MDS</label><br>
-                <label style="font-size: 20px;"><input type="checkbox" id="TSNE" class="styled-checkbox" checked>
+                <label style="font-size: 20px; font-family: Arial, sans-serif;"><input type="checkbox" id="TSNE" class="styled-checkbox" checked>
                     t-SNE</label><br>
-                <label style="font-size: 20px;"><input type="checkbox" id="RANDOM" class="styled-checkbox" checked>
+                <label style="font-size: 20px; font-family: Arial, sans-serif;"><input type="checkbox" id="RANDOM" class="styled-checkbox" checked>
                     Random</label><br>
             </div>
 
@@ -62,7 +62,8 @@
     <dt-appendix>
         <div class="l-body">
             <h3>Description & Acknowledgement</h3>
-            <p>This is a web application that contains several figures. The figures plot the "normalized" stress and KL-divergence
+            <p>This is a web application that contains several figures. The figures plot the "normalized" stress and KL 
+                divergence
             curves of MDS, t-SNE, and Random (points are randomly placed) embeddings over a range of scalars for various well-known
             datasets. The minimum value for each curve has been labeled with a point, which denotes the scale-normalized metric score. 
             <!-- By hovering over the point, the user can examine its exact  -->
@@ -72,7 +73,7 @@
             <!-- the max value for the x-axis range (from 1 to 2000).</p> -->
 
             <p>The code and instructions needed to reproduce the experiments upon which this graphical interface is based, including 
-                the implementation of scale-normalized stress and KL-divergence, are made <a href="https://github.com/KiranSmelser/stress-metrics-and-scale">available on GitHub</a>.</p>
+                the implementation of scale-normalized stress and KL divergence, are made <a href="https://github.com/KiranSmelser/stress-metrics-and-scale">available on GitHub</a>.</p>
     
             <p>Published on July 7, 2024, (updated April 15, 2025) and created by Kiran Smelser to demonstrate the issues with using normalized stress as a
             quality metric. Thanks to Professor Kobourov for pointing out that normalized stress is scale sensitive.</p>
