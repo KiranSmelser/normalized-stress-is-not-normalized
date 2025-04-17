@@ -18,11 +18,13 @@ class DRPlot {
         this.tooltipContainer = d3.select(config.tooltipContainer);
 
         this.margin = { top: 20, right: 20, bottom: 30, left: 40 };
-        this.width = this.svg.node().getBoundingClientRect().width - this.margin.left - this.margin.right;
-        this.height = this.svg.node().getBoundingClientRect().height - this.margin.top - this.margin.bottom;
+        this.width  = this.svg.node().getBoundingClientRect().width  - this.margin.left - this.margin.right;
+        this.height = this.svg.node().getBoundingClientRect().height - this.margin.top  - this.margin.bottom;
 
         this.x = d3.scaleLinear().range([0, this.width]);
-        this.y = d3.scaleLog().range([this.height, 0]);
+
+        const sscale = this.metric === "stress" ? d3.scaleLog() : d3.scaleLinear();
+        this.y = sscale.range([this.height, 0]);
 
         this.line = d3.line()
             .x(d => this.x(d.range))
@@ -43,6 +45,32 @@ class DRPlot {
             .text(this.metric === 'stress' ? "Stress" : "KL Divergence");
 
         this.createAxes();
+
+        if(this.metric === "stress")
+            this.addLegend();
+    }
+
+    addLegend(){
+        const legend = this.svg.append('g')
+            .attr("transform", "translate(50,20)");
+
+        this.techniques.forEach((key, i) => {
+            const legendRow = legend.append('g')
+                .attr("transform", `translate(0, ${i * 20})`);
+
+            legendRow.append("rect")
+                .attr('width', 10)
+                .attr("height", 10)
+                .attr("fill", this.colorForKey(key));
+            legendRow.append("text")
+                .attr("x", 15)
+                .attr("y", 10)
+                .attr("dy", "-0.25em")
+                .text(key)
+                .style("font-size", '12px')
+                .attr('alignment-baseline', "middle");
+        })
+        
     }
 
     createAxes() {
@@ -177,6 +205,7 @@ class DRImages {
             const div = this.imageDiv.append("div")
                 .style("display", "inline-block")
                 .style("width", width)
+                .style("height", '100%')
                 .style("text-align", "center");
 
             div.append("p")
@@ -187,6 +216,7 @@ class DRImages {
 
             div.append("img")
                 .attr("src", `./pdfs/${dataset}_${t}.svg`)
+                .attr("class", 'projection')
                 .attr("alt", `${t} embedding for ${dataset}`)
                 .style("max-width", "100%")
                 .style("margin-top", "0px");
