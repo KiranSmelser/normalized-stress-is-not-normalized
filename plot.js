@@ -51,6 +51,7 @@ class DRPlot {
     }
 
     addLegend(){
+        const legendLabels = { "MDS": "MDS", "TSNE": "t-SNE", "RANDOM": "Random" };
         const legend = this.svg.append('g')
             .attr("transform", "translate(50,20)");
 
@@ -66,7 +67,7 @@ class DRPlot {
                 .attr("x", 15)
                 .attr("y", 10)
                 .attr("dy", "-0.25em")
-                .text(key)
+                .text(legendLabels[key])
                 .style("font-size", '12px')
                 .attr('alignment-baseline', "middle");
         })
